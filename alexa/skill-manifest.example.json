@@ -1,0 +1,36 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "en-CA": {
+          "name": "My Claw",
+          "summary": "Talk to a privately hosted OpenClaw assistant.",
+          "description": "A personal voice bridge to a privately hosted OpenClaw assistant.",
+          "examplePhrases": [
+            "Alexa, open my claw",
+            "Alexa, ask my claw to check the backups",
+            "Alexa, ask my claw for a status update"
+          ],
+          "keywords": ["openclaw", "assistant", "personal"]
+        }
+      },
+      "isAvailableWorldwide": false,
+      "distributionCountries": ["CA"],
+      "category": "ORGANIZERS_AND_ASSISTANTS"
+    },
+    "apis": {
+      "custom": {
+        "endpoint": { "uri": "https://assistant.example.com/alexa", "sslCertificateType": "Trusted" },
+        "interfaces": []
+      }
+    },
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false
+    }
+  }
+}

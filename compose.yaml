@@ -1,0 +1,25 @@
+services:
+  alexa-openclaw-bridge:
+    build: .
+    image: ghcr.io/8exgh/openclaw-alexa-bridge:latest
+    container_name: openclaw-alexa-bridge
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HOST_PORT:-3042}:3000"
+    environment:
+      NODE_ENV: production
+      ALEXA_APPLICATION_ID: ${ALEXA_APPLICATION_ID}
+      OPENCLAW_BASE_URL: ${OPENCLAW_BASE_URL}
+      OPENCLAW_TOKEN: ${OPENCLAW_TOKEN}
+      OPENCLAW_AGENT_ID: ${OPENCLAW_AGENT_ID:-alexa}
+      OPENCLAW_CLAW_ID: ${OPENCLAW_CLAW_ID:-default}
+      OPENCLAW_CLAW_NAME: ${OPENCLAW_CLAW_NAME:-my claw}
+      PAIRING_ADMIN_TOKEN: ${PAIRING_ADMIN_TOKEN}
+      AUTO_PAIR_SINGLE_CLAW: ${AUTO_PAIR_SINGLE_CLAW:-true}
+      FAST_RESPONSE_BUDGET_MS: ${FAST_RESPONSE_BUDGET_MS:-5500}
+      OPENCLAW_TIMEOUT_MS: ${OPENCLAW_TIMEOUT_MS:-600000}
+    volumes:
+      - alexa-bridge-data:/app/data
+
+volumes:
+  alexa-bridge-data:

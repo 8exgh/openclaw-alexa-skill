@@ -1,0 +1,43 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "my claw",
+      "intents": [
+        {
+          "name": "AskClawIntent",
+          "slots": [
+            { "name": "query", "type": "AMAZON.SearchQuery" }
+          ],
+          "samples": [
+            "ask {query}",
+            "tell my claw to {query}",
+            "have my claw {query}",
+            "find out {query}",
+            "do {query}"
+          ]
+        },
+        {
+          "name": "PairClawIntent",
+          "slots": [],
+          "samples": ["pair my claw", "pair claw", "connect my claw", "set up my claw"]
+        },
+        {
+          "name": "TaskStatusIntent",
+          "slots": [],
+          "samples": ["status", "status update", "give me a status update", "what is the task status", "is my task done", "how is that work going"]
+        },
+        {
+          "name": "CancelTaskIntent",
+          "slots": [],
+          "samples": ["cancel the task", "cancel that work", "stop the current task", "cancel my latest task"]
+        },
+        { "name": "AMAZON.CancelIntent", "samples": [] },
+        { "name": "AMAZON.FallbackIntent", "samples": [] },
+        { "name": "AMAZON.HelpIntent", "samples": [] },
+        { "name": "AMAZON.StopIntent", "samples": [] },
+        { "name": "AMAZON.NavigateHomeIntent", "samples": [] }
+      ],
+      "types": []
+    }
+  }
+}

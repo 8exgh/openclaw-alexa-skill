@@ -1,0 +1,20 @@
+{
+  gateway: {
+    // Keep this endpoint private. Only the Alexa bridge should be able to reach it.
+    http: {
+      endpoints: {
+        responses: { enabled: true },
+      },
+    },
+  },
+  agents: {
+    list: [
+      {
+        id: "alexa",
+        name: "Alexa",
+        // Put the contents of alexa-agent-instructions.md in this agent's workspace.
+        // Select a fast model and restrict tools for your own risk tolerance.
+      },
+    ],
+  },
+}
