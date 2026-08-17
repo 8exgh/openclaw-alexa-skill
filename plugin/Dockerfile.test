@@ -1,0 +1,11 @@
+FROM node:24.15-bookworm
+WORKDIR /plugin
+COPY package*.json ./
+RUN npm ci
+COPY tsconfig.json openclaw.plugin.json README.md ./
+COPY src ./src
+COPY test ./test
+RUN npm run typecheck && npm test && npm run build
+RUN npm pack --pack-destination /tmp
+RUN npx openclaw plugins install npm-pack:/tmp/8examples-openclaw-alexa-0.1.0.tgz --force
+RUN npx openclaw plugins inspect alexa-bridge --runtime --json

@@ -1,25 +1,36 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: openclaw-alexa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alexa_bridge
+      POSTGRES_USER: alexa_bridge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - alexa-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alexa_bridge -d alexa_bridge"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
   alexa-openclaw-bridge:
     build: .
     image: ghcr.io/8exgh/openclaw-alexa-bridge:latest
     container_name: openclaw-alexa-bridge
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "127.0.0.1:${HOST_PORT:-3042}:3000"
     environment:
       NODE_ENV: production
       ALEXA_APPLICATION_ID: ${ALEXA_APPLICATION_ID}
-      OPENCLAW_BASE_URL: ${OPENCLAW_BASE_URL}
-      OPENCLAW_TOKEN: ${OPENCLAW_TOKEN}
-      OPENCLAW_AGENT_ID: ${OPENCLAW_AGENT_ID:-alexa}
-      OPENCLAW_CLAW_ID: ${OPENCLAW_CLAW_ID:-default}
-      OPENCLAW_CLAW_NAME: ${OPENCLAW_CLAW_NAME:-my claw}
-      PAIRING_ADMIN_TOKEN: ${PAIRING_ADMIN_TOKEN}
-      AUTO_PAIR_SINGLE_CLAW: ${AUTO_PAIR_SINGLE_CLAW:-true}
+      DATABASE_URL: postgresql://alexa_bridge:${POSTGRES_PASSWORD}@postgres:5432/alexa_bridge
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN}
       FAST_RESPONSE_BUDGET_MS: ${FAST_RESPONSE_BUDGET_MS:-5500}
-      OPENCLAW_TIMEOUT_MS: ${OPENCLAW_TIMEOUT_MS:-600000}
-    volumes:
-      - alexa-bridge-data:/app/data
-
+      TASK_TIMEOUT_MS: ${TASK_TIMEOUT_MS:-600000}
 volumes:
-  alexa-bridge-data:
+  alexa-postgres-data:

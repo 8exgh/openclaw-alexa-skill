@@ -9,8 +9,8 @@
           "description": "A personal voice bridge to a privately hosted OpenClaw assistant.",
           "examplePhrases": [
             "Alexa, open my claw",
-            "Alexa, ask my claw to check the backups",
-            "Alexa, ask my claw for a status update"
+            "Alexa, start my claw",
+            "Alexa, launch my claw"
           ],
           "keywords": ["openclaw", "assistant", "personal"]
         }

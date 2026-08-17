@@ -1,0 +1,13 @@
+{
+  "name": "@8examples/openclaw-alexa",
+  "version": "0.1.0",
+  "description": "Connect an OpenClaw installation to the My Claw Alexa skill",
+  "type": "module",
+  "engines": { "node": ">=22.22.3 <23 || >=24.15.0 <25 || >=25.9.0" },
+  "files": ["dist", "openclaw.plugin.json", "README.md"],
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit", "test": "node --import tsx --test test/**/*.test.ts" },
+  "dependencies": { "ws": "^8.18.3" },
+  "devDependencies": { "@types/node": "^24.2.1", "@types/ws": "^8.18.1", "tsx": "^4.20.3", "typescript": "^5.9.2" },
+  "peerDependencies": { "openclaw": ">=2026.5.17" },
+  "openclaw": { "extensions": ["./src/index.ts"], "runtimeExtensions": ["./dist/index.js"], "compat": { "pluginApi": ">=2026.5.17", "minGatewayVersion": "2026.5.17" } }
+}
