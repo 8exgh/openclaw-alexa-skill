@@ -39,12 +39,13 @@ jobs:
           PUBLIC_BASE_URL: ${{ secrets.OPENCLAW_ALEXA_PUBLIC_BASE_URL }}
           ADMIN_API_TOKEN: ${{ secrets.OPENCLAW_ALEXA_ADMIN_API_TOKEN }}
         run: |
+          encoded_postgres_password=$(node -p 'encodeURIComponent(process.env.POSTGRES_PASSWORD)')
           docker stop "${CONTAINER}" || true
           docker rm "${CONTAINER}" || true
           docker run -d --name "${CONTAINER}" --restart unless-stopped \
             --network "${NETWORK}" -p "${HOST_PORT}:3000" \
             -e NODE_ENV=production -e ALEXA_APPLICATION_ID -e PUBLIC_BASE_URL -e ADMIN_API_TOKEN \
-            -e DATABASE_URL="postgresql://alexa_bridge:${POSTGRES_PASSWORD}@${POSTGRES_CONTAINER}:5432/alexa_bridge" \
+            -e DATABASE_URL="postgresql://alexa_bridge:${encoded_postgres_password}@${POSTGRES_CONTAINER}:5432/alexa_bridge" \
             -e FAST_RESPONSE_BUDGET_MS=5500 -e TASK_TIMEOUT_MS=600000 "${IMAGE}"
       - name: Health check
         run: |
