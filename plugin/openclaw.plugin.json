@@ -1,0 +1,16 @@
+{
+  "id": "alexa-bridge",
+  "name": "Alexa Bridge",
+  "description": "Pairs this OpenClaw with the My Claw Alexa skill over an outbound connection.",
+  "version": "0.1.0",
+  "activation": { "onStartup": true },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "agentId": { "type": "string", "default": "alexa" },
+      "credentialFile": { "type": "string" },
+      "taskTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 3600000, "default": 600000 }
+    }
+  }
+}

@@ -1,0 +1,76 @@
+name: Configure OpenClaw Alexa Cloudflare route
+
+on:
+  workflow_dispatch:
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    env:
+      CF_API: https://api.cloudflare.com/client/v4
+      HOSTNAME: claw-alexa.fusenv.com
+      ZONE_NAME: fusenv.com
+      ORIGIN_SERVICE: http://192.168.4.56:3070
+    steps:
+      - name: Discover account, zone, and tunnel
+        id: discover
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          auth=(-H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
+          account_id=$(curl -fsS "${auth[@]}" "${CF_API}/accounts?per_page=50" | jq -r '.result[0].id // empty')
+          test -n "${account_id}" || { echo "Unable to discover Cloudflare account" >&2; exit 1; }
+          zone_id=$(curl -fsS "${auth[@]}" "${CF_API}/zones?name=${ZONE_NAME}" | jq -r '.result[0].id // empty')
+          test -n "${zone_id}" || { echo "Zone ${ZONE_NAME} was not found" >&2; exit 1; }
+          tunnels=$(curl -fsS "${auth[@]}" "${CF_API}/accounts/${account_id}/cfd_tunnel?is_deleted=false&per_page=100")
+          tunnel_id=$(jq -r '.result[] | select(.name == "cloudflared") | .id' <<<"${tunnels}" | head -1)
+          if [ -z "${tunnel_id}" ]; then
+            tunnel_id=$(jq -r '.result[] | select(.name == "marie-tunnel") | .id' <<<"${tunnels}" | head -1)
+          fi
+          test -n "${tunnel_id}" || { echo "Neither cloudflared nor marie-tunnel was found" >&2; jq -r '.result[].name' <<<"${tunnels}" >&2; exit 1; }
+          echo "account_id=${account_id}" >> "${GITHUB_OUTPUT}"
+          echo "zone_id=${zone_id}" >> "${GITHUB_OUTPUT}"
+          echo "tunnel_id=${tunnel_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Preserve configuration and upsert ingress
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT_ID: ${{ steps.discover.outputs.account_id }}
+          TUNNEL_ID: ${{ steps.discover.outputs.tunnel_id }}
+        run: |
+          set -euo pipefail
+          auth=(-H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
+          current=$(curl -fsS "${auth[@]}" "${CF_API}/accounts/${ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}/configurations")
+          body=$(jq --arg hostname "${HOSTNAME}" --arg service "${ORIGIN_SERVICE}" '
+            .result.config as $config
+            | ($config.ingress // []) as $rules
+            | [$rules[] | select(.hostname != $hostname and .hostname != null)]
+              + [{hostname: $hostname, service: $service}]
+              + [$rules[] | select(.hostname == null)] as $ingress
+            | {config: ($config + {ingress: $ingress})}
+          ' <<<"${current}")
+          curl -fsS -X PUT "${auth[@]}" \
+            "${CF_API}/accounts/${ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}/configurations" \
+            --data "${body}" | jq -e '.success == true' >/dev/null
+
+      - name: Upsert tunnel DNS record
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ZONE_ID: ${{ steps.discover.outputs.zone_id }}
+          TUNNEL_ID: ${{ steps.discover.outputs.tunnel_id }}
+        run: |
+          set -euo pipefail
+          auth=(-H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
+          target="${TUNNEL_ID}.cfargotunnel.com"
+          record=$(curl -fsS "${auth[@]}" "${CF_API}/zones/${ZONE_ID}/dns_records?name=${HOSTNAME}")
+          record_id=$(jq -r '.result[0].id // empty' <<<"${record}")
+          body=$(jq -n --arg name "${HOSTNAME}" --arg content "${target}" '{type:"CNAME",name:$name,content:$content,proxied:true,ttl:1}')
+          if [ -n "${record_id}" ]; then
+            curl -fsS -X PUT "${auth[@]}" "${CF_API}/zones/${ZONE_ID}/dns_records/${record_id}" --data "${body}" | jq -e '.success == true' >/dev/null
+          else
+            curl -fsS -X POST "${auth[@]}" "${CF_API}/zones/${ZONE_ID}/dns_records" --data "${body}" | jq -e '.success == true' >/dev/null
+          fi
+
+      - name: Summary
+        run: echo "Configured https://${HOSTNAME} -> ${ORIGIN_SERVICE}"

@@ -3,9 +3,10 @@ export type TaskStatus = "queued" | "running" | "completed" | "failed" | "cancel
 export interface ClawInstallation {
   id: string;
   name: string;
-  baseUrl: string;
-  token: string;
-  agentId: string;
+  credentialHash: string;
+  createdAt: string;
+  revokedAt?: string;
+  lastSeenAt?: string;
 }
 
 export interface BridgeTask {
@@ -32,4 +33,10 @@ export interface PersistedState {
   pairings: Record<string, string>;
   pairingCodes: Record<string, PairingCode>;
   tasks: Record<string, BridgeTask>;
+}
+
+export interface InstallationCredential {
+  installationId: string;
+  token: string;
+  bridgeWebSocketUrl: string;
 }
