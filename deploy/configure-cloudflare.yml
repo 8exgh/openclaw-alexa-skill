@@ -35,9 +35,9 @@ jobs:
           body=$(jq --arg hostname "${HOSTNAME}" --arg service "${ORIGIN_SERVICE}" '
             .result.config as $config
             | ($config.ingress // []) as $rules
-            | [$rules[] | select(.hostname != $hostname and .hostname != null)]
+            | ([$rules[] | select(.hostname != $hostname and .hostname != null)]
               + [{hostname: $hostname, service: $service}]
-              + [$rules[] | select(.hostname == null)] as $ingress
+              + [$rules[] | select(.hostname == null)]) as $ingress
             | {config: ($config + {ingress: $ingress})}
           ' <<<"${current}")
           curl -fsS -X PUT "${auth[@]}" \
