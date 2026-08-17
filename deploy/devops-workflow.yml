@@ -39,7 +39,8 @@ jobs:
           PUBLIC_BASE_URL: ${{ secrets.OPENCLAW_ALEXA_PUBLIC_BASE_URL }}
           ADMIN_API_TOKEN: ${{ secrets.OPENCLAW_ALEXA_ADMIN_API_TOKEN }}
         run: |
-          encoded_postgres_password=$(node -p 'encodeURIComponent(process.env.POSTGRES_PASSWORD)')
+          encoded_postgres_password=$(docker run --rm -e POSTGRES_PASSWORD "${IMAGE}" \
+            node -p 'encodeURIComponent(process.env.POSTGRES_PASSWORD)')
           docker stop "${CONTAINER}" || true
           docker rm "${CONTAINER}" || true
           docker run -d --name "${CONTAINER}" --restart unless-stopped \
