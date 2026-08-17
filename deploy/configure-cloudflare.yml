@@ -8,36 +8,26 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CF_API: https://api.cloudflare.com/client/v4
+      ACCOUNT_ID: be2484925dc7150169c09e6770fb7e38
+      TUNNEL_ID: 39498ef8-d3c6-4d42-9d0d-575835d98207
       HOSTNAME: claw-alexa.fusenv.com
       ZONE_NAME: fusenv.com
       ORIGIN_SERVICE: http://192.168.4.56:3070
     steps:
-      - name: Discover account, zone, and tunnel
+      - name: Discover zone
         id: discover
         env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_DNS_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
         run: |
           set -euo pipefail
-          auth=(-H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
-          account_id=$(curl -fsS "${auth[@]}" "${CF_API}/accounts?per_page=50" | jq -r '.result[0].id // empty')
-          test -n "${account_id}" || { echo "Unable to discover Cloudflare account" >&2; exit 1; }
+          auth=(-H "Authorization: Bearer ${CF_DNS_TOKEN}" -H "Content-Type: application/json")
           zone_id=$(curl -fsS "${auth[@]}" "${CF_API}/zones?name=${ZONE_NAME}" | jq -r '.result[0].id // empty')
           test -n "${zone_id}" || { echo "Zone ${ZONE_NAME} was not found" >&2; exit 1; }
-          tunnels=$(curl -fsS "${auth[@]}" "${CF_API}/accounts/${account_id}/cfd_tunnel?is_deleted=false&per_page=100")
-          tunnel_id=$(jq -r '.result[] | select(.name == "cloudflared") | .id' <<<"${tunnels}" | head -1)
-          if [ -z "${tunnel_id}" ]; then
-            tunnel_id=$(jq -r '.result[] | select(.name == "marie-tunnel") | .id' <<<"${tunnels}" | head -1)
-          fi
-          test -n "${tunnel_id}" || { echo "Neither cloudflared nor marie-tunnel was found" >&2; jq -r '.result[].name' <<<"${tunnels}" >&2; exit 1; }
-          echo "account_id=${account_id}" >> "${GITHUB_OUTPUT}"
           echo "zone_id=${zone_id}" >> "${GITHUB_OUTPUT}"
-          echo "tunnel_id=${tunnel_id}" >> "${GITHUB_OUTPUT}"
 
       - name: Preserve configuration and upsert ingress
         env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          ACCOUNT_ID: ${{ steps.discover.outputs.account_id }}
-          TUNNEL_ID: ${{ steps.discover.outputs.tunnel_id }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_API_TOKEN }}
         run: |
           set -euo pipefail
           auth=(-H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
@@ -56,9 +46,8 @@ jobs:
 
       - name: Upsert tunnel DNS record
         env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
           ZONE_ID: ${{ steps.discover.outputs.zone_id }}
-          TUNNEL_ID: ${{ steps.discover.outputs.tunnel_id }}
         run: |
           set -euo pipefail
           auth=(-H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json")
