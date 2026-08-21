@@ -2,7 +2,7 @@
   "id": "alexa-bridge",
   "name": "Alexa Bridge",
   "description": "Pairs this OpenClaw with the My Claw Alexa skill over an outbound connection.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "activation": { "onStartup": true },
   "configSchema": {
     "type": "object",
